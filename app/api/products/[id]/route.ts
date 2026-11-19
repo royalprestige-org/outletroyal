@@ -10,7 +10,7 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
   if(!existing)return Response.json({error:'Producto no encontrado'},{status:404});
   const isSet=input.kind==='set';
   const now=new Date().toISOString();
-  const statements=[database.prepare('UPDATE products SET name=?,description=?,base_price=?,kind=?,is_kitchen_set=?,completed=?,updated_at=? WHERE id=?').bind(name,description,price,isSet?'set':'individual',!!input.isKitchenSet?1:0,!!input.completed?1:0,now,id),database.prepare('DELETE FROM product_components WHERE product_id=?').bind(id)];
+  const statements=[database.prepare('UPDATE products SET name=?,description=?,base_price=?,kind=?,is_kitchen_set=?,completed=?,updated_at=? WHERE id=?').bind(name,description,price,isSet?'set':'individual',!!input.isKitchenSet,!!input.completed,now,id),database.prepare('DELETE FROM product_components WHERE product_id=?').bind(id)];
   if(isSet)for(const [i,c] of components.entries()){
    const label=String(c.label||'').trim(),qty=Number(c.quantity),target=c.componentProductId?String(c.componentProductId):null;
    if(!label||label.length>180||!Number.isInteger(qty)||qty<1||qty>100||target===id)return Response.json({error:'Revisa los artículos incluidos en el set.'},{status:400});

@@ -1,20 +1,33 @@
-import {env} from 'cloudflare:workers';
 import {db,requireAdmin,responseError} from '@/lib/catalog-db';
+import {productStorage} from '@/lib/supabase/storage';
+export const runtime='nodejs';
 export async function GET(_request:Request,{params}:{params:Promise<{id:string}>}){
- try{const {id}=await params;const row=await db().prepare('SELECT object_key FROM product_photos WHERE id=?').bind(id).first<{object_key:string}>();
-  if(!row)return new Response('No encontrada',{status:404});
-  if(row.object_key==='static:chef-assist')return Response.redirect(new URL('/chef-assist.webp',_request.url));
-  const object=await env.BUCKET?.get(row.object_key);if(!object)return new Response('No encontrada',{status:404});
-  const headers=new Headers();object.writeHttpMetadata(headers);headers.set('Cache-Control','public, max-age=3600');
-  return new Response(object.body,{headers});
- }catch(e){return responseError(e)}
+  try{
+    const {id}=await params;
+    const row=await db().prepare('SELECT object_key FROM product_photos WHERE id=?')
+      .bind(id).first<{object_key:string}>();
+    if(!row||row.object_key==='static:chef-assist')return new Response('Foto no encontrada',{status:404});
+    const {data,error}=await productStorage().download(row.object_key);
+    if(error||!data)return new Response('Foto no encontrada',{status:404});
+    return new Response(await data.arrayBuffer(),{headers:{
+      'Content-Type':data.type||'application/octet-stream',
+      'X-Content-Type-Options':'nosniff',
+      'Cache-Control':'public, max-age=3600',
+    }});
+  }catch(e){return responseError(e)}
 }
 export async function DELETE(_request:Request,{params}:{params:Promise<{id:string}>}){
- if(!await requireAdmin())return Response.json({error:'Acceso no autorizado'},{status:401});
- try{const {id}=await params;const database=db();const row=await database.prepare('SELECT object_key FROM product_photos WHERE id=?').bind(id).first<{object_key:string}>();
-  if(!row)return Response.json({error:'Foto no encontrada'},{status:404});
-  await database.prepare('DELETE FROM product_photos WHERE id=?').bind(id).run();
-  if(row.object_key!=='static:chef-assist')await env.BUCKET?.delete(row.object_key);
-  return Response.json({ok:true});
- }catch(e){return responseError(e)}
+  if(!await requireAdmin())return Response.json({error:'Acceso no autorizado'},{status:401});
+  try{
+    const {id}=await params,database=db();
+    const row=await database.prepare('SELECT object_key FROM product_photos WHERE id=?')
+      .bind(id).first<{object_key:string}>();
+    if(!row)return Response.json({error:'Foto no encontrada'},{status:404});
+    if(row.object_key!=='static:chef-assist'){
+      const {error}=await productStorage().remove([row.object_key]);
+      if(error)throw error;
+    }
+    await database.prepare('DELETE FROM product_photos WHERE id=?').bind(id).run();
+    return Response.json({ok:true});
+  }catch(e){return responseError(e)}
 }

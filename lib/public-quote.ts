@@ -7,7 +7,7 @@ export async function calculatePublicQuote(input:QuoteRequest){
  if(!Array.isArray(input.items)||!input.items.length||input.items.length>60||!['cash','card','finance'].includes(input.payment))throw new Error('Revisa tu selección y forma de pago.');
  if(input.purchaseMode!==undefined&&!['normal','outlet'].includes(input.purchaseMode))throw new Error('Revisa la modalidad de compra.');
  await seedIfEmpty();const database=db();
- const [products,offers]=await Promise.all([database.prepare('SELECT id,name,base_price,is_kitchen_set FROM products').all<{id:string;name:string;base_price:number;is_kitchen_set:number}>(),database.prepare('SELECT id,name,special_price FROM offers WHERE active=1').all<{id:string;name:string;special_price:number}>()]);
+ const [products,offers]=await Promise.all([database.prepare('SELECT id,name,base_price,is_kitchen_set FROM products').all<{id:string;name:string;base_price:number;is_kitchen_set:number}>(),database.prepare('SELECT id,name,special_price FROM offers WHERE active=true').all<{id:string;name:string;special_price:number}>()]);
  const productById=new Map(products.results.map(p=>[p.id,p])),offerById=new Map(offers.results.map(o=>[`OF-${o.id}`,o]));
  const ids=new Set<string>(),lines:PriceItem[]=[],selected:{productId:string;name:string;quantity:number;basePrice:number}[]=[];
  for(const item of input.items){const id=String(item.productId),quantity=Number(item.quantity),p=productById.get(id),o=offerById.get(id);
