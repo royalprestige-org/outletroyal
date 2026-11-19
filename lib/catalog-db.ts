@@ -1,41 +1,140 @@
-import {env} from 'cloudflare:workers';
+import 'server-only';
+import { Pool } from 'pg';
 import seed from '@/data/catalog.json';
-import {getChatGPTUser} from '@/app/chatgpt-auth';
-const warrantyById=new Map(seed.map(product=>[product.id,product.warranty]));
+import { getChatGPTUser } from '@/app/chatgpt-auth';
 
-export function db(){if(!env.DB)throw new Error('Catálogo no disponible');return env.DB;}
-const ADMIN_USER_ID='9d0bce37-6a0d-45f2-8b77-f41f50166bfc';
-// Sites supplies authenticated identity; its site-local ID can differ from the account ID.
-const ADMIN_EMAIL_HASH='e475303fc4c24d42dbfcc44dfbd8ede3c30728430cf121ede6dfd7d5084e92d1';
-export async function requireAdmin(){
- const user=await getChatGPTUser();
- if(!user)return null;
- if(user.userId===ADMIN_USER_ID)return user;
- const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(user.email.trim().toLowerCase()));
- const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
- return hash===ADMIN_EMAIL_HASH?user:null;
+type Row = Record<string, unknown>;
+const warrantyById = new Map(seed.map(product => [product.id, product.warranty]));
+let pool: Pool | undefined;
+
+function getPool(): Pool {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error('DATABASE_URL no está configurada.');
+  if (!pool) pool = new Pool({
+    connectionString,
+    max: 4,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000,
+    allowExitOnIdle: true,
+  });
+  return pool;
 }
-export async function seedIfEmpty(){
- const database=db();
- const row=await database.prepare('SELECT COUNT(*) AS n FROM products').first<{n:number}>();
- if(row?.n)return;
- const now=new Date().toISOString();
- const inserts=seed.map(p=>database.prepare('INSERT OR IGNORE INTO products (id,name,family,category,description,base_price,kind,is_kitchen_set,completed,updated_at) VALUES (?,?,?,?,?,?,?,?,0,?)').bind(p.id,p.name,p.family,p.category,p.description,p.basePrice,p.kind,p.isKitchenSet?1:0,now));
- for(let i=0;i<inserts.length;i+=40)await database.batch(inserts.slice(i,i+40));
- const rel=seed.flatMap(p=>p.components.map((c,i)=>database.prepare('INSERT OR IGNORE INTO product_components (id,product_id,component_product_id,label,quantity,position) VALUES (?,?,?,?,?,?)').bind(`seed:${p.id}:${i}`,p.id,null,c.label,c.quantity,i)));
- for(let i=0;i<rel.length;i+=40)await database.batch(rel.slice(i,i+40));
- await database.prepare('INSERT OR IGNORE INTO product_photos (id,product_id,object_key,position) VALUES (?,?,?,?)').bind('seed:chef-assist','RP-140','static:chef-assist',0).run();
+
+function normalizeRow<T>(row: Row | undefined): T | null {
+  if (!row) return null;
+  const normalized: Row = { ...row };
+  for (const field of ['n', 'expires_at']) {
+    const value = normalized[field];
+    if (typeof value === 'string' && /^\d+$/.test(value)) {
+      const number = Number(value);
+      if (Number.isSafeInteger(number)) normalized[field] = number;
+    }
+  }
+  return normalized as T;
 }
-export async function allProducts(){
- const database=db();await seedIfEmpty();
- const [ps,cs,ph]=await Promise.all([
-  database.prepare('SELECT * FROM products ORDER BY id').all(),
-  database.prepare('SELECT * FROM product_components ORDER BY product_id,position').all(),
-  database.prepare('SELECT * FROM product_photos ORDER BY product_id,position').all(),
- ]);
- const components=new Map<string,unknown[]>();const photos=new Map<string,unknown[]>();
- for(const c of cs.results){const id=String(c.product_id);components.set(id,[...(components.get(id)||[]),{id:c.id,componentProductId:c.component_product_id,label:c.label,quantity:c.quantity}]);}
- for(const p of ph.results){const id=String(p.product_id);photos.set(id,[...(photos.get(id)||[]),{id:p.id,url:p.object_key==='static:chef-assist'?'/chef-assist.webp':`/api/photos/${p.id}`}]);}
- return ps.results.map(p=>({id:p.id,name:p.name,family:p.family,category:p.category,description:p.description,basePrice:p.base_price,kind:p.kind,isKitchenSet:!!p.is_kitchen_set,completed:!!p.completed,updatedAt:p.updated_at,components:components.get(String(p.id))||[],photos:photos.get(String(p.id))||[],warranty:warrantyById.get(String(p.id))||null}));
+
+class PreparedQuery {
+  constructor(readonly sql: string, readonly parameters: unknown[] = []) {}
+  bind(...parameters: unknown[]) {
+    return new PreparedQuery(this.sql, parameters);
+  }
+  compile() {
+    let index = 0;
+    const text = this.sql.replace(/\?/g, () => '$' + (++index));
+    if (index !== this.parameters.length) {
+      throw new Error('La cantidad de parámetros SQL no coincide.');
+    }
+    return { text, values: this.parameters };
+  }
+  async first<T>(): Promise<T | null> {
+    const query = this.compile();
+    const result = await getPool().query(query.text, query.values);
+    return normalizeRow<T>(result.rows[0]);
+  }
+  async all<T = Row>(): Promise<{ results: T[] }> {
+    const query = this.compile();
+    const result = await getPool().query(query.text, query.values);
+    return { results: result.rows.map((r: Row) => normalizeRow<T>(r)!) };
+  }
+  async run() {
+    const query = this.compile();
+    const result = await getPool().query(query.text, query.values);
+    return { meta: { changes: result.rowCount ?? 0 } };
+  }
 }
-export function responseError(e:unknown){console.error(e);return Response.json({error:'No se pudo completar la operación. Intenta de nuevo.'},{status:500});}
+
+class PostgresAdapter {
+  prepare(sql: string) { return new PreparedQuery(sql); }
+  async batch(statements: PreparedQuery[]) {
+    const client = await getPool().connect();
+    try {
+      await client.query('BEGIN');
+      for (const statement of statements) {
+        const query = statement.compile();
+        await client.query(query.text, query.values);
+      }
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+}
+const database = new PostgresAdapter();
+export function db() { return database; }
+
+export async function requireAdmin() {
+  const user = await getChatGPTUser();
+  if (!user) return null;
+  const admin = await db().prepare('SELECT role FROM public.admin_users WHERE user_id=? AND active=true')
+    .bind(user.userId).first<{ role: string }>();
+  return admin ? user : null;
+}
+
+export async function seedIfEmpty() {
+  // Never overwrite administrators' product changes during a request.
+  const row = await db().prepare('SELECT COUNT(*) AS n FROM public.products').first<{ n: number }>();
+  if (!row?.n) throw new Error('El catálogo todavía no está importado en Supabase.');
+}
+
+export async function allProducts() {
+  await seedIfEmpty();
+  const [ps, cs, ph] = await Promise.all([
+    db().prepare('SELECT * FROM public.products ORDER BY id').all<Row>(),
+    db().prepare('SELECT * FROM public.product_components ORDER BY product_id,position').all<Row>(),
+    db().prepare('SELECT * FROM public.product_photos ORDER BY product_id,position').all<Row>(),
+  ]);
+  const components = new Map<string, unknown[]>();
+  const photos = new Map<string, unknown[]>();
+  for (const c of cs.results) {
+    const id = String(c.product_id);
+    components.set(id, [...(components.get(id) || []), {
+      id: c.id, componentProductId: c.component_product_id,
+      label: c.label, quantity: c.quantity,
+    }]);
+  }
+  for (const p of ph.results) {
+    const id = String(p.product_id);
+    // Legacy static image source was not exported from Sites. Retain its row.
+    if (p.object_key === 'static:chef-assist') continue;
+    photos.set(id, [...(photos.get(id) || []), {
+      id: p.id, url: '/api/photos/' + p.id,
+    }]);
+  }
+  return ps.results.map(p => ({
+    id: p.id, name: p.name, family: p.family,
+    category: p.category, description: p.description, basePrice: p.base_price,
+    kind: p.kind, isKitchenSet: !!p.is_kitchen_set, completed: !!p.completed,
+    updatedAt: p.updated_at, components: components.get(String(p.id)) || [],
+    photos: photos.get(String(p.id)) || [],
+    warranty: p.warranty_json && Object.keys(p.warranty_json as Row).length
+      ? p.warranty_json : warrantyById.get(String(p.id)) || null,
+  }));
+}
+
+export function responseError(error: unknown) {
+  console.error(error);
+  return Response.json({ error: 'No se pudo completar la operación. Intenta de nuevo.' }, { status: 500 });
+}
