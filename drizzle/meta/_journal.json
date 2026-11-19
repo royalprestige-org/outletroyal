@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1790497096770,
+      "tag": "0000_fine_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790524692788,
+      "tag": "0001_old_falcon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790525972964,
+      "tag": "0002_finance_quote_prefill",
+      "breakpoints": true
+    }
+  ]
+}
