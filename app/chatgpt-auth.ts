@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server';
 export type ChatGPTUser = {userId:string;displayName:string;email:string;fullName:string|null};
 export async function getChatGPTUser(): Promise<ChatGPTUser|null> {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return null;
   const supabase = await createClient();
   const {data,error} = await supabase.auth.getUser();
   const user = data.user;
