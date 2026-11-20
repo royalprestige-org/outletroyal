@@ -6,7 +6,7 @@ export default async function LoginPage({searchParams}:{searchParams:Promise<{er
   return <main style={{maxWidth:420,margin:'72px auto',padding:24}}>
     <a href="/vitrina">← Volver a la tienda</a>
     <h1 style={{marginTop:24,fontSize:28,fontWeight:700}}>Acceso administrativo</h1>
-    <p>Ingresa con tu cuenta autorizada de Outlet Royal.</p>
+    <p>Ingresa con tu cuenta autorizada de Outlet de artículos de cocina.</p>
     {params.error&&<p role="alert" style={{color:'#ae2020'}}>Verifica tus credenciales.</p>}
     <form action={signIn} style={{display:'grid',gap:14,marginTop:24}}>
       <input type="hidden" name="next" value={next}/>
