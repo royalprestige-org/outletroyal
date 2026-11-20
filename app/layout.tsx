@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Outlet de artículos de cocina | Los Cabos",
-  description: "Descubre productos Royal Prestige para tu cocina, consulta precios y promociones, y recibe asesoría personalizada por WhatsApp en Los Cabos.",
+  description: "Descubre artículos de cocina, consulta precios y promociones, y recibe asesoría personalizada por WhatsApp en Los Cabos.",
   openGraph: {
     title: "Outlet de artículos de cocina | Los Cabos",
     description: "Explora nuestra colección, elige tus favoritos y envíanos tu selección por WhatsApp. Asesoría personalizada y entrega a domicilio.",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "Outlet de artículos de cocina | Los Cabos",
-    description: "Explora productos y promociones Royal Prestige. Elige tus favoritos y contáctanos por WhatsApp.",
+    description: "Explora productos y promociones para tu cocina. Elige tus favoritos y contáctanos por WhatsApp.",
   },
   icons: {
     icon: "/favicon.svg",
