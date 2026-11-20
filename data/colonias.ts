@@ -5,4 +5,4 @@ export const colonias:Record<string,string[]>={
  'La Paz':['Centro','Pueblo Nuevo','Fidepaz','El Conchalito','Las Garzas','8 de Octubre','Arcos del Sol','Benito Juárez','Otra colonia'],
 };
 export const slots=['08:00–10:00','10:00–12:00','12:00–14:00','14:00–16:00','16:00–18:00','18:00–20:00','20:00–22:00'];
-export function slotAvailable(date:string,slot:string){if(!date||!slot)return false;const day=new Date(`${date}T12:00:00`).getDay();return !(day>=1&&day<=5&&slot==='16:00–18:00')}
+export function slotAvailable(date:string,slot:string){return Boolean(date&&slots.includes(slot)&&slot!=='16:00–18:00')}
