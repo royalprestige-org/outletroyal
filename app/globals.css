@@ -114,3 +114,21 @@ button{cursor:pointer}
 @media(max-width:750px){.admin-shell{display:block}.rail{min-height:unset;padding:10px 16px;flex-direction:row;align-items:center;justify-content:space-between}.brand{padding:0}.brand>span:last-child{display:block}.rail nav{display:flex}.rail nav button,.rail nav .rail-link{min-height:40px;width:44px;padding:8px}.workspace{padding:21px 13px}.topline{align-items:start}.counter{font-size:12px}.columns{display:block}.queue,.detail{min-height:auto}.queue{margin-bottom:15px}.list{max-height:330px;min-height:150px}.detail-scroll{max-height:none}.detail-empty{min-height:250px}.photos{grid-template-columns:repeat(5,1fr)}}
 
 .warranty-admin{border:1px solid #dbe5eb;background:#f8fafb;border-radius:10px;padding:18px;margin:24px 0}.warranty-admin .section-line{margin:0 0 10px;padding:0;border:0}.warranty-admin strong{display:block;color:#203951;font-size:16px}.warranty-admin p{font-size:13px;line-height:1.55;color:#627587;margin:10px 0}.warranty-admin a{font-size:13px;color:#31688e}.warranty-admin-state{font-size:11px;color:#3a7154;background:#e6f3e9;padding:6px 9px;border-radius:20px}.warranty-admin-state.review{color:#80642e;background:#f8efdb}
+
+/* Admin: categoría y relaciones de compra dirigidas. */
+.related-admin{display:grid;gap:14px;margin:0 0 26px}
+.related-help{font-size:13px;color:#617184;line-height:1.55;margin:0}
+.related-chips{display:flex;flex-wrap:wrap;gap:8px}
+.related-chip{display:flex;align-items:center;gap:9px;border:1px solid #d9e0e7;border-radius:10px;background:#f7f9fb;padding:9px 11px;max-width:100%;font-size:13px;color:#27384b}
+.related-chip>span{min-width:0;overflow-wrap:anywhere}
+.related-chip small{display:block;margin-top:3px;color:#7b8795;font-size:11px}
+.related-chip button{border:0;border-radius:6px;background:#e9edf1;padding:6px;display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.related-chip button:hover{background:#ffe8e8;color:#9c2727}
+.related-empty{width:100%;padding:15px;background:#f9fafb;border:1px dashed #ced7df;border-radius:9px;font-size:13px;color:#8290a0;margin:0}
+.related-search-results{border:1px solid #d6dfe7;border-radius:10px;max-height:260px;overflow:auto;background:#fff;box-shadow:0 10px 22px #17283b12}
+.related-search-results button{width:100%;padding:11px 12px;display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:0;border-bottom:1px solid #edf0f3;cursor:pointer}
+.related-search-results button:hover{background:#f5f8fc}
+.related-search-results button strong{font-size:13px;font-weight:650;flex:1}
+.related-search-results button small{font-size:11px;color:#7b8795}
+.related-search-results p{font-size:13px;color:#718096;padding:12px}
+@media(max-width:750px){.related-search-results button{flex-wrap:wrap}.related-search-results button small{width:100%}}
