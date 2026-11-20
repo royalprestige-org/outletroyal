@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tienda Outlet Los Cabos | Royal Prestige",
+  title: "Outlet de artículos de cocina | Los Cabos",
   description: "Descubre productos Royal Prestige para tu cocina, consulta precios y promociones, y recibe asesoría personalizada por WhatsApp en Los Cabos.",
   openGraph: {
-    title: "Tienda Outlet Los Cabos | Royal Prestige",
+    title: "Outlet de artículos de cocina | Los Cabos",
     description: "Explora nuestra colección, elige tus favoritos y envíanos tu selección por WhatsApp. Asesoría personalizada y entrega a domicilio.",
     type: "website",
     locale: "es_MX",
-    siteName: "Tienda Outlet Los Cabos",
+    siteName: "Outlet de artículos de cocina",
   },
   twitter: {
     card: "summary",
-    title: "Tienda Outlet Los Cabos | Royal Prestige",
+    title: "Outlet de artículos de cocina | Los Cabos",
     description: "Explora productos y promociones Royal Prestige. Elige tus favoritos y contáctanos por WhatsApp.",
   },
   icons: {
