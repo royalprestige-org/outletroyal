@@ -14,12 +14,36 @@ import {displayFamily,matchesProduct} from '@/lib/catalog-search';
 import './storefront.css';
 
 type Photo={id:string;url:string};type Part={label:string;quantity:number};type Warranty={label:string;details:string;status:'verified'|'review';sourceUrl:string};
-type Item={id:string;name:string;family:string;category:string;description:string;isKitchenSet:boolean;photos:Photo[];components:Part[];warranty?:Warranty|null;isOffer?:boolean;price?:number;outlet?:{list:number;price:number;rate:number}};
+type Item={id:string;name:string;family:string;category:string;description:string;isKitchenSet:boolean;photos:Photo[];components:Part[];relatedProductIds?:string[];warranty?:Warranty|null;isOffer?:boolean;price?:number;outlet?:{list:number;price:number;rate:number}};
+type SelectedItem=Item&{quantity:number;directQuantity:number;relatedQuantity:number;relatedFrom:string[]};
 type Offer={id:string;name:string;description:string;price?:number;items:{productId:string;quantity:number}[]};
 const money=(value:number)=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:2}).format(value);
 const imageOf=(p:Item)=>p.photos?.[0]?.url||'';
 const cleanBrand=(value:string)=>value.replace(/Royal\s+Prestige(?:®|™)?/gi,'').replace(/\s{2,}/g,' ').trim();
 const labelFor=(name:string)=>cleanBrand(name)||name;
+// Reglas dirigidas, de un nivel: elegir A suma B/C/D, elegir B solo no suma A.
+// Los artículos vinculados se cotizan como artículos independientes.
+function expandSelection(items:Item[],roots:Record<string,number>):SelectedItem[]{
+ const byId=new Map(items.map(item=>[item.id,item]));
+ const totals=new Map<string,{direct:number;linked:number;from:string[]}>();
+ const addQuantity=(id:string,quantity:number,isDirect:boolean,source?:string)=>{
+  if(!byId.has(id))return;
+  const current=totals.get(id)||{direct:0,linked:0,from:[]};
+  if(isDirect)current.direct+=quantity;
+  else{current.linked+=quantity;if(source&&!current.from.includes(source))current.from.push(source)}
+  totals.set(id,current);
+ };
+ for(const [id,quantity] of Object.entries(roots)){
+  const parent=byId.get(id);
+  if(!parent||quantity<=0)continue;
+  addQuantity(id,quantity,true);
+  for(const relatedId of parent.relatedProductIds||[])addQuantity(relatedId,quantity,false,parent.name);
+ }
+ return items.filter(item=>totals.has(item.id)).map(item=>{
+  const counts=totals.get(item.id)!;
+  return {...item,quantity:counts.direct+counts.linked,directQuantity:counts.direct,relatedQuantity:counts.linked,relatedFrom:counts.from};
+ });
+}
 function OutletPrice({item,quantity=1}:{item:Item;quantity?:number}) {
  if(!item.outlet)return null;
  return <div className="outlet-price"><del aria-label="Precio de lista">{money(item.outlet.list*quantity)}</del><strong>{money(item.outlet.price*quantity)}</strong><span>−{item.outlet.rate}%</span></div>;
@@ -30,7 +54,7 @@ export default function Storefront(){
  const [purchaseMode,setPurchaseMode]=useState<'normal'|'outlet'>('outlet');
  const [campaign,setCampaign]=useState(false),[resolvedKey,setResolvedKey]=useState('');
  const [quoteValue,setSelectedQuote]=useState<{total:number;monthly:number;down:number}|null>(null),[giftIds,setGiftIds]=useState<string[]>([]),[addIds,setAddIds]=useState<string[]>([]),[quoteBusy,setQuoteBusy]=useState(false),[quoteError,setQuoteError]=useState('');
- const [query,setQuery]=useState(''),[family,setFamily]=useState('Todos'),[detail,setDetail]=useState<Item|null>(null),[photoIndex,setPhotoIndex]=useState(0),[cartOpen,setCartOpen]=useState(false);
+ const [query,setQuery]=useState(''),[family,setFamily]=useState('Todos'),[category,setCategory]=useState('Todas'),[detail,setDetail]=useState<Item|null>(null),[photoIndex,setPhotoIndex]=useState(0),[cartOpen,setCartOpen]=useState(false);
  const [cart,setCart]=useState<Record<string,number>>({}),[payment,setPayment]=useState<Payment|null>(null),[months,setMonths]=useState(3),[financeMonths,setFinanceMonths]=useState(12),[giftId,setGiftId]=useState(''),[additionalId,setAdditionalId]=useState('');
  const [city,setCity]=useState(''),[colonia,setColonia]=useState(''),[otherColonia,setOtherColonia]=useState(''),[address,setAddress]=useState(''),[customerName,setCustomerName]=useState(''),[phone,setPhone]=useState(''),[date,setDate]=useState(''),[slot,setSlot]=useState(''),[showVisit,setShowVisit]=useState(false);
  const [referralsEnabled,setReferralsEnabled]=useState(false),[friends,setFriends]=useState(Array.from({length:4},()=>({name:'',phone:''}))),[permissionConfirmed,setPermissionConfirmed]=useState(false);
@@ -43,26 +67,32 @@ export default function Storefront(){
  const offerItems:Item[]=useMemo(()=>offers.map(o=>({id:`OF-${o.id}`,name:o.name,description:o.description,family:'Ofertas especiales',category:'Sets promocionales',isKitchenSet:true,isOffer:true,price:o.price,photos:[],components:o.items.map(i=>({label:products.find(p=>p.id===i.productId)?.name||i.productId,quantity:i.quantity}))})),[offers,products]);
  const campaignAvailable=campaign&&outletActive(clock),active=campaignAvailable&&purchaseMode==='outlet';
  const all=useMemo(()=>[...offerItems,...products],[offerItems,products]);
- const families=useMemo(()=>['Todos',...new Set(all.filter(p=>!active||!!p.outlet).map(displayFamily))],[all,active]);
- const visible=useMemo(()=>all.filter(p=>(!active||!!p.outlet)&&(family==='Todos'||displayFamily(p)===family)&&matchesProduct(p,query)),[all,family,query,active]);
- const featured=useMemo(()=>['Sets de cocina','Ollas y sartenes','Cuchillería','Bebidas y electrodomésticos'].map(f=>products.find(p=>p.family===f&&(!active||!!p.outlet))).filter((p):p is Item=>Boolean(p)),[products,active]);
+ const available=useMemo(()=>{
+  const byId=new Map(all.map(p=>[p.id,p]));
+  return all.filter(p=>!active||(!!p.outlet&&(p.relatedProductIds||[]).every(id=>!!byId.get(id)?.outlet)));
+ },[all,active]);
+ const families=useMemo(()=>['Todos',...new Set(available.map(displayFamily))],[available]);
+ const categories=useMemo(()=>['Todas',...new Set(available.filter(p=>family==='Todos'||displayFamily(p)===family).map(p=>p.category||p.family))].sort((a,b)=>a==='Todas'?-1:b==='Todas'?1:a.localeCompare(b,'es')),[available,family]);
+ const visible=useMemo(()=>available.filter(p=>(family==='Todos'||displayFamily(p)===family)&&(category==='Todas'||(p.category||p.family)===category)&&matchesProduct(p,query)),[available,family,category,query]);
+ const featured=useMemo(()=>['Sets de cocina','Ollas y sartenes','Cuchillería','Bebidas y electrodomésticos'].map(f=>available.find(p=>p.family===f)).filter((p):p is Item=>Boolean(p)),[available]);
  const featuredCategories=['Sets de cocina','Ollas y sartenes','Bebidas y electrodomésticos','Cuchillería'];
- function browseFamily(value:string){setFamily(value);setQuery('');document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth',block:'start'})}
- const selected=useMemo(()=>all.filter(p=>cart[p.id]>0&&(!active||!!p.outlet)).map(p=>({...p,quantity:cart[p.id]})),[all,cart,active]);
+ function browseFamily(value:string){setFamily(value);setCategory('Todas');setQuery('');document.getElementById('catalogo')?.scrollIntoView({behavior:'smooth',block:'start'})}
+ const roots=useMemo(()=>Object.fromEntries(Object.entries(cart).filter(([id])=>available.some(p=>p.id===id))),[cart,available]);
+ const selected=useMemo(()=>expandSelection(all,roots),[all,roots]);
  const hasOutlet=active&&selected.some(p=>p.outlet),hasNormal=selected.some(p=>!active||!p.outlet);
  const allowBenefits=hasNormal;
  const allowReferral=allowBenefits&&referralsEnabled;
  const effectivePayment=hasOutlet&&payment==='finance'?null:payment;
  const term=hasOutlet?0:payment==='finance'?financeMonths:payment==='card'?months:0;
  const chosenGift=allowBenefits?giftId:'',chosenAdditional=hasOutlet?'':additionalId;
- const quoteKey=JSON.stringify([cart,effectivePayment,term,chosenGift,chosenAdditional,hasOutlet,purchaseMode]);
+ const quoteKey=JSON.stringify([roots,selected.map(p=>[p.id,p.quantity]),effectivePayment,term,chosenGift,chosenAdditional,hasOutlet,purchaseMode]);
  const selectedQuote=resolvedKey===quoteKey?quoteValue:null;
  useEffect(()=>{if(hasOutlet){setAdditionalId('');if(payment==='finance')setPayment(null)}if(!allowBenefits){setGiftId('');setReferralsEnabled(false);setPermissionConfirmed(false)}},[hasOutlet,allowBenefits,payment]);
  const giftOptions=useMemo(()=>products.filter(p=>giftIds.includes(p.id)),[products,giftIds]);
  const addOptions=useMemo(()=>products.filter(p=>addIds.includes(p.id)),[products,addIds]);
  const additional=products.find(p=>p.id===chosenAdditional);
  useEffect(()=>{if(!effectivePayment||!selected.length){setSelectedQuote(null);setGiftIds([]);setAddIds([]);setQuoteBusy(false);return}let cancelled=false;
-  setQuoteBusy(true);const timer=setTimeout(()=>{fetch('/api/public/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:selected.map(p=>({productId:p.id,quantity:p.quantity})),giftId:chosenGift,additionalId:chosenAdditional,payment:effectivePayment,months:term,purchaseMode,expectedOutlet:hasOutlet})}).then(async r=>{const data=await r.json() as {error?:string;quote:{total:number;monthly:number;down:number};giftOptions:string[];addOptions:string[]};if(!r.ok)throw new Error(data.error||'No pudimos calcular el total.');return data}).then(data=>{if(cancelled)return;setSelectedQuote(data.quote);setResolvedKey(quoteKey);setGiftIds(data.giftOptions);setAddIds(data.addOptions);setQuoteError('')}).catch(e=>{if(!cancelled){setSelectedQuote(null);setQuoteError((e as Error).message);if(giftId)setGiftId('');if(additionalId)setAdditionalId('')}}).finally(()=>{if(!cancelled)setQuoteBusy(false)})},150);
+  setQuoteBusy(true);const timer=setTimeout(()=>{fetch('/api/public/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:Object.entries(roots).map(([productId,quantity])=>({productId,quantity})),giftId:chosenGift,additionalId:chosenAdditional,payment:effectivePayment,months:term,purchaseMode,expectedOutlet:hasOutlet})}).then(async r=>{const data=await r.json() as {error?:string;quote:{total:number;monthly:number;down:number};giftOptions:string[];addOptions:string[]};if(!r.ok)throw new Error(data.error||'No pudimos calcular el total.');return data}).then(data=>{if(cancelled)return;setSelectedQuote(data.quote);setResolvedKey(quoteKey);setGiftIds(data.giftOptions);setAddIds(data.addOptions);setQuoteError('')}).catch(e=>{if(!cancelled){setSelectedQuote(null);setQuoteError((e as Error).message);if(giftId)setGiftId('');if(additionalId)setAdditionalId('')}}).finally(()=>{if(!cancelled)setQuoteBusy(false)})},150);
   return()=>{cancelled=true;clearTimeout(timer)};
  },[quoteKey,products,offers]);
  const friendNumbers=friends.map(friend=>friend.phone.replace(/\D/g,'').replace(/^52(?=\d{10}$)/,''));
@@ -71,9 +101,9 @@ export default function Storefront(){
  const qty=selected.reduce((total,item)=>total+item.quantity,0);
  function chooseMode(mode:'normal'|'outlet'){
  if(mode===purchaseMode)return;
- setPurchaseMode(mode);setFamily('Todos');setPayment(null);setGiftId('');setAdditionalId('');setReferralsEnabled(false);setPermissionConfirmed(false);setSelectedQuote(null);setResolvedKey('');setGiftIds([]);setAddIds([]);setBooking(null);
+ setPurchaseMode(mode);setFamily('Todos');setCategory('Todas');setPayment(null);setGiftId('');setAdditionalId('');setReferralsEnabled(false);setPermissionConfirmed(false);setSelectedQuote(null);setResolvedKey('');setGiftIds([]);setAddIds([]);setBooking(null);
  }
- function add(p:Item){setCart(current=>({...current,[p.id]:(current[p.id]||0)+1}));setDetail(null);setCartOpen(true)}
+ function add(p:Item){if(!available.some(item=>item.id===p.id))return;setCart(current=>({...current,[p.id]:(current[p.id]||0)+1}));setDetail(null);setCartOpen(true)}
  function changeQty(id:string,delta:number){setCart(current=>{const next={...current},n=(next[id]||0)+delta;if(n<=0)delete next[id];else next[id]=n;return next})}
  function openDetail(p:Item){setDetail(p);setPhotoIndex(0)}
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Mazatlan',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -83,7 +113,7 @@ export default function Storefront(){
  function releaseCurrent(){reservationSeq.current++;const current=holdRef.current;holdRef.current=null;setHold(null);if(current)void fetch('/api/appointments/hold',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(current)})}
  function chooseDate(day:string){releaseCurrent();setBooking(null);setDate(day);setSlot('');setAvailability({});setHoldError('');if(day)void refreshAvailability(day)}
  async function chooseSlot(value:string){releaseCurrent();setBooking(null);setSlot('');setHoldError('');if(value==='none'||!date)return;const seq=reservationSeq.current;try{const r=await fetch('/api/appointments/hold',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,slot:value})});const d=await r.json() as {error?:string;token:string;expiresAt:number};if(!r.ok)throw new Error(d.error||'El horario ya no está disponible.');if(seq!==reservationSeq.current){void fetch('/api/appointments/hold',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({date,slot:value,token:d.token})});return}const next={date,slot:value,token:d.token,expiresAt:d.expiresAt};holdRef.current=next;setHold(next);setSlot(value);void refreshAvailability(date)}catch(e){setHoldError((e as Error).message);void refreshAvailability(date)}}
- async function bookVisit(){if(!hold||!selectedQuote||quoteBusy||!referralReady||!customerName.trim()||!phone.trim()||!address.trim()||!city||!colonia)return;setBookingBusy(true);setHoldError('');try{const source={items:selected.map(p=>({productId:p.id,name:p.name,quantity:p.quantity})),giftId:chosenGift,additionalId:chosenAdditional,payment:effectivePayment,months:term,purchaseMode,expectedOutlet:hasOutlet,estimatedTotal:selectedQuote.total,...(allowReferral?{referralOffer:{friends,permissionConfirmed}}:{})};const r=await fetch('/api/appointments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:hold.date,slot:hold.slot,token:hold.token,customerName,phone,city,colonia:colonia==='Otra colonia'?otherColonia:colonia,address,source})});const data=await r.json() as {error?:string;id:string;status:string};if(!r.ok)throw new Error(data.error||'No se pudo registrar la cita.');reservationSeq.current++;holdRef.current=null;setHold(null);setBooking({id:data.id,status:data.status})}catch(e){setHoldError((e as Error).message);if(hold.expiresAt<=Date.now()){setHold(null);setSlot('')}void refreshAvailability(date)}finally{setBookingBusy(false)}}
+ async function bookVisit(){if(!hold||!selectedQuote||quoteBusy||!referralReady||!customerName.trim()||!phone.trim()||!address.trim()||!city||!colonia)return;setBookingBusy(true);setHoldError('');try{const source={items:Object.entries(roots).map(([productId,quantity])=>({productId,name:all.find(p=>p.id===productId)?.name||productId,quantity})),giftId:chosenGift,additionalId:chosenAdditional,payment:effectivePayment,months:term,purchaseMode,expectedOutlet:hasOutlet,estimatedTotal:selectedQuote.total,...(allowReferral?{referralOffer:{friends,permissionConfirmed}}:{})};const r=await fetch('/api/appointments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:hold.date,slot:hold.slot,token:hold.token,customerName,phone,city,colonia:colonia==='Otra colonia'?otherColonia:colonia,address,source})});const data=await r.json() as {error?:string;id:string;status:string};if(!r.ok)throw new Error(data.error||'No se pudo registrar la cita.');reservationSeq.current++;holdRef.current=null;setHold(null);setBooking({id:data.id,status:data.status})}catch(e){setHoldError((e as Error).message);if(hold.expiresAt<=Date.now()){setHold(null);setSlot('')}void refreshAvailability(date)}finally{setBookingBusy(false)}}
  function whatsapp(visit:boolean){if(!selected.length||!payment||!selectedQuote||quoteBusy||!referralReady)return;const pay=payment==='cash'?'Contado':payment==='card'?(hasOutlet?'Tarjeta de crédito en un solo pago':`${months} meses sin intereses con tarjeta`):`Financiamiento sin tarjeta a ${financeMonths} meses`;
   const parts=['Hola, me interesan estos artículos de cocina:',`Modalidad: ${active?'Outlet':'Compra regular'}`,...selected.map(p=>`• ${p.quantity} × ${p.name}${active&&p.outlet?` — Outlet ${money(p.outlet.price*p.quantity)} (−${p.outlet.rate}%)`: ''}`),hasOutlet?OUTLET_NOTICE:'',additional?`• Producto adicional a precio especial: ${additional.name}`:'',chosenGift?`• Regalo elegido: ${products.find(p=>p.id===chosenGift)?.name}`:'',allowReferral?'• Beneficio adicional por cuatro recomendaciones: Juego Deluxe 3 piezas':'',...(allowReferral?friends.map((friend,i)=>`• Referencia ${i+1}: ${friend.name.trim()} · ${friend.phone.trim()}`):[]),allowReferral?`He confirmado que estas personas autorizaron compartir sus datos y recibir una llamada. Corporativo NEXIA: favor de esperar 48 horas por si retiro alguna autorización. Aviso de privacidad: ${window.location.origin}/privacidad`:'',`Forma de pago: ${pay}`,payment==='finance'?`Anticipo: ${money(selectedQuote?.down||0)} · ${financeMonths} mensualidades de ${money(selectedQuote?.monthly||0)}`:payment==='card'&&!hasOutlet?`${months} mensualidades estimadas de ${money(selectedQuote?.monthly||0)}`:'',`Total estimado a pagar: ${money(selectedQuote?.total||0)}`,visit?`Cita registrada ${booking?.id||''} (pendiente de confirmación): ${date}, ${slot}. ${address}, ${colonia==='Otra colonia'?otherColonia:colonia}, ${city}. Cliente: ${customerName}. Teléfono: ${phone}.`:''];window.open(`https://wa.me/526241710903?text=${encodeURIComponent(parts.filter(Boolean).join('\n'))}`,'_blank','noopener,noreferrer')}
  return <div className={active?"storefront outlet-store":"storefront"}>
