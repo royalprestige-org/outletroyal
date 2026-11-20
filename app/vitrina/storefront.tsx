@@ -68,7 +68,7 @@ export default function Storefront(){
  const friendNumbers=friends.map(friend=>friend.phone.replace(/\D/g,'').replace(/^52(?=\d{10}$)/,''));
  const referralReady=!allowReferral||(permissionConfirmed&&friends.every(friend=>friend.name.trim().length>=2)&&friendNumbers.every(number=>/^\d{10}$/.test(number))&&new Set(friendNumbers).size===4&&!friendNumbers.includes(phone.replace(/\D/g,'').replace(/^52(?=\d{10}$)/,'')));
  function changeFriend(index:number,key:'name'|'phone',value:string){setFriends(current=>current.map((friend,i)=>i===index?{...friend,[key]:value}:friend))}
- const qty=Object.values(cart).reduce((a,b)=>a+b,0);
+ const qty=selected.reduce((total,item)=>total+item.quantity,0);
  function chooseMode(mode:'normal'|'outlet'){
  if(mode===purchaseMode)return;
  setPurchaseMode(mode);setFamily('Todos');setPayment(null);setGiftId('');setAdditionalId('');setReferralsEnabled(false);setPermissionConfirmed(false);setSelectedQuote(null);setResolvedKey('');setGiftIds([]);setAddIds([]);setBooking(null);
