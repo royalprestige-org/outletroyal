@@ -149,3 +149,46 @@
 .cart-line small{line-height:1.45}
 .qty-control button:disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:760px){.category-filter{align-items:stretch;flex-direction:column;gap:7px}.category-filter-select{width:100%!important}.card-related{font-size:10px}}
+
+
+/* Colección completa: selector de vista y paginación. */
+.storefront .catalog-display-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:14px 0 1px}
+.storefront .catalog-view-switch{display:inline-flex;align-items:center;gap:3px;padding:4px;border:1px solid #E2E5E8;border-radius:12px;background:#F5F6F7}
+.storefront .catalog-view-switch button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:8px 14px;border:0;border-radius:9px;background:transparent;color:#66717B;font-size:13px;font-weight:650}
+.storefront .catalog-view-switch button.selected{background:#252A30;color:#fff;box-shadow:0 2px 7px #252A301c}
+.storefront .catalog-page-size{display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:#596775;font-size:13px;font-weight:600}
+.storefront .catalog-page-size select{min-width:69px;height:40px;padding:6px 10px;border:1px solid #DDE2E6;border-radius:9px;background:#fff;color:#252A30;font:inherit}
+.storefront .product-grid.is-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+.storefront .product-grid.is-list{grid-template-columns:minmax(0,1fr)}
+.storefront .product-grid.is-list .store-card{display:grid;grid-template-columns:clamp(175px,23vw,260px) minmax(0,1fr);align-items:stretch}
+.storefront .product-grid.is-list .card-media{height:100%;min-height:210px;aspect-ratio:auto;border-radius:0}
+.storefront .product-grid.is-list .card-copy{display:flex;flex-direction:column;min-width:0;justify-content:center;gap:8px;padding:20px 24px}
+.storefront .product-grid.is-list .card-copy h3{min-height:0;margin:0 0 4px}
+.storefront .product-grid.is-list .card-buttons{margin-top:8px}
+.storefront .catalog-pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:28px;padding:18px 0 0;border-top:1px solid #E2E5E8}
+.storefront .catalog-pagination>p{margin:0;color:#66717B;font-size:13px}
+.storefront .catalog-page-buttons{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.storefront .catalog-page-buttons button{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:38px;height:38px;padding:6px 11px;border:1px solid #DDE2E6;border-radius:9px;background:#fff;color:#252A30;font-size:13px}
+.storefront .catalog-page-buttons button.current{background:#252A30;color:white;border-color:#252A30;font-weight:700}
+.storefront .catalog-page-buttons button:disabled{opacity:.4;cursor:not-allowed}
+.storefront .catalog-view-switch button:focus-visible,.storefront .catalog-page-size select:focus-visible,.storefront .catalog-page-buttons button:focus-visible{outline:2px solid #66788B;outline-offset:3px}
+@media(max-width:760px){
+ .storefront .catalog-display-controls{gap:10px}
+ .storefront .catalog-view-switch button{padding:8px 11px}
+ .storefront .product-grid.is-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .storefront .product-grid.is-list .store-card{grid-template-columns:minmax(110px,35%) minmax(0,1fr)}
+ .storefront .product-grid.is-list .card-media{min-height:180px}
+ .storefront .product-grid.is-list .card-copy{padding:12px;gap:5px}
+ .storefront .product-grid.is-list .card-copy h3{font-size:15px;min-height:0}
+ .storefront .product-grid.is-list .card-buttons{margin-top:4px}
+ .storefront .catalog-pagination{align-items:flex-start;justify-content:center;text-align:center}
+ .storefront .catalog-page-buttons{justify-content:center}
+}
+@media(max-width:400px){
+ .storefront .catalog-page-size{font-size:12px}
+ .storefront .product-grid.is-list .store-card{grid-template-columns:minmax(100px,34%) minmax(0,1fr)}
+ .storefront .product-grid.is-list .card-copy{padding:10px}
+ .storefront .product-grid.is-list .card-copy h3{font-size:13px}
+ .storefront .product-grid.is-list .card-media{min-height:170px}
+ .storefront .catalog-page-buttons button{min-width:33px;padding:6px 8px}
+}
