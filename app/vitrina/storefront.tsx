@@ -140,7 +140,7 @@ export default function Storefront(){
    visit&&booking?`Solicitud de visita ${booking.id} (pendiente de confirmación): ${date} a las ${slot}. ${address}, ${colonia==='Otra colonia'?otherColonia:colonia}, ${city}.`:'',
    'Deseo que me contacten para recibir asesoría. Entiendo que esta página no procesa pagos.'
   ];
-  const message=parts.filter(Boolean).join('\\n');
+  const message=parts.filter(Boolean).join('\n');
   // Se abre la pestaña en la interacción original para evitar bloqueadores de popups móviles.
   const popup=window.open('about:blank','_blank');
   if(popup){
