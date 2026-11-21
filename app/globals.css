@@ -173,3 +173,42 @@ button{cursor:pointer}
 .gift-eligibility-admin input[type="checkbox"]{width:20px;height:20px;flex:none;accent-color:#334f67}
 .gift-eligibility-admin small{color:#728193;font-size:12px;line-height:1.6}
 @media(max-width:650px){.gift-eligibility-admin{padding:15px 13px;margin:14px 0}.gift-eligibility-admin .toggle{font-size:13px}}
+
+
+/* Regalos sugeridos: editor desplegable con selección múltiple contextual. */
+.gift-suggestion-editor{margin:18px 0 27px;padding:17px;border:1px solid #dce3e9;border-radius:13px;background:#fbfcfd;display:grid;gap:13px;min-width:0}
+.gift-suggestion-header{display:flex;align-items:flex-start;gap:12px}
+.gift-suggestion-header>svg{flex:none;color:#8b704f;margin-top:2px}
+.gift-suggestion-header h3{margin:0;color:#293d53;font-size:15px;font-weight:750}
+.gift-suggestion-header h3 span{font-weight:400;color:#748497}
+.gift-suggestion-header p,.gift-suggestion-help{color:#65788b;font-size:12px;line-height:1.55;margin:5px 0 0}
+.gift-suggestion-dropdown{background:#fff;border:1px solid #cfd9e3;border-radius:10px;min-width:0}
+.gift-suggestion-dropdown>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;cursor:pointer;font-size:13px;font-weight:700;color:#2e4359;min-height:45px;list-style:none}
+.gift-suggestion-dropdown>summary::-webkit-details-marker{display:none}
+.gift-suggestion-dropdown>summary:before{content:'▾';font-size:13px;color:#70839a}
+.gift-suggestion-dropdown[open]>summary:before{content:'▴'}
+.gift-suggestion-dropdown>summary span{margin-left:auto;font-size:11px;font-weight:500;color:#69798c}
+.gift-suggestion-dropdown>summary:focus-visible{outline:2px solid #66809a;outline-offset:3px}
+.gift-suggestion-content{border-top:1px solid #e2e7ed;padding:10px}
+.gift-suggestion-search{display:flex;align-items:center;gap:9px;border:1px solid #d8e0e8;border-radius:8px;padding:0 11px;min-height:43px;background:white}
+.gift-suggestion-search svg{color:#8796a5;flex:none}
+.gift-suggestion-search input{flex:1;min-width:0;height:41px;outline:none;border:0;background:transparent;color:#26374c;font-size:14px}
+.gift-suggestion-options{max-height:245px;overflow:auto;margin-top:10px;border:1px solid #e4e9ee;border-radius:8px}
+.gift-suggestion-option{display:flex;align-items:center;gap:10px;padding:10px 11px;border-bottom:1px solid #edf0f3;cursor:pointer;min-height:47px}
+.gift-suggestion-option:last-child{border-bottom:0}
+.gift-suggestion-option:has(input:checked){background:#f0f5f8}
+.gift-suggestion-option:focus-within{outline:2px solid #889eaf;outline-offset:-2px}
+.gift-suggestion-option>input{width:18px;height:18px;flex:none;accent-color:#344d68}
+.gift-suggestion-option-name{flex:1;min-width:0;color:#2f4559;font-size:13px;overflow-wrap:anywhere}
+.gift-suggestion-option-name small{display:block;margin-top:3px;font-size:11px;color:#78889a}
+.gift-suggestion-status{border-radius:99px;padding:5px 8px;font-size:10px;flex:none}
+.gift-suggestion-status.ready{background:#e7f3e8;color:#336948}
+.gift-suggestion-status.pending{background:#f2f2f3;color:#6d7481}
+.gift-suggestion-selected{display:flex;flex-wrap:wrap;gap:7px}
+.gift-suggestion-chip{display:flex;align-items:center;gap:7px;border:1px solid #cfdce6;border-radius:8px;padding:6px 7px 6px 10px;background:white;max-width:100%;color:#33475c;font-size:12px}
+.gift-suggestion-chip>span{overflow-wrap:anywhere}
+.gift-suggestion-chip button{display:grid;place-items:center;flex:none;min-width:30px;min-height:30px;border:0;border-radius:6px;background:#f0f2f5;color:#4c6174}
+.gift-suggestion-chip button:hover{color:#932b2b;background:#ffe9e7}
+.gift-suggestion-empty{font-size:12px;color:#8b99a8;margin:0;padding:10px 0}
+.gift-suggestion-help{margin:0}
+@media(max-width:600px){.gift-suggestion-editor{padding:12px}.gift-suggestion-option{flex-wrap:wrap}.gift-suggestion-status{margin-left:28px}}
