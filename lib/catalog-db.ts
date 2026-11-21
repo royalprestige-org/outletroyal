@@ -102,7 +102,7 @@ export async function seedIfEmpty() {
 export async function allProducts() {
   await seedIfEmpty();
   const [ps, cs, ph, rel] = await Promise.all([
-    db().prepare('SELECT * FROM public.products ORDER BY id').all<Row>(),
+    db().prepare('SELECT p.*,c.name AS category_name,sc.name AS subcategory_name FROM public.products p LEFT JOIN public.catalog_categories c ON c.id=p.category_id LEFT JOIN public.catalog_subcategories sc ON sc.id=p.subcategory_id ORDER BY p.id').all<Row>(),
     db().prepare('SELECT * FROM public.product_components ORDER BY product_id,position').all<Row>(),
     db().prepare('SELECT * FROM public.product_photos ORDER BY product_id,position').all<Row>(),
     db().prepare('SELECT product_id,related_product_id FROM public.product_relations ORDER BY product_id,position,related_product_id').all<Row>(), 
@@ -131,7 +131,7 @@ export async function allProducts() {
   }
   return ps.results.map(p => ({
     id: p.id, name: p.name, family: p.family,
-    category: p.category, description: p.description, basePrice: p.base_price,
+    category: p.category_name || '', subcategory: p.subcategory_name || '', categoryId: p.category_id || null, subcategoryId: p.subcategory_id || null, description: p.description, basePrice: p.base_price,
     kind: p.kind, isKitchenSet: !!p.is_kitchen_set, completed: !!p.completed,
     updatedAt: p.updated_at, components: components.get(String(p.id)) || [],
     relatedProductIds: related.get(String(p.id)) || [],
