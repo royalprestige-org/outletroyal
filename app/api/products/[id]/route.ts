@@ -1,4 +1,5 @@
 import {db,requireAdmin,responseError,seedIfEmpty} from '@/lib/catalog-db';
+import {hasRestrictedBrand} from '@/lib/brand-policy';
 
 export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}){
  if(!await requireAdmin())return Response.json({error:'Acceso no autorizado'},{status:401});
@@ -31,6 +32,8 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
     if(!found)return Response.json({error:'La subcategoría no pertenece a la categoría elegida.'},{status:400});
   }
   const price=Number(input.basePrice),components=Array.isArray(input.components)?input.components:[];
+  if(hasRestrictedBrand(name)||hasRestrictedBrand(description)||components.some(c=>hasRestrictedBrand(c?.label)))
+   return Response.json({error:'Utiliza nombres y descripciones neutrales, sin marcas de fabricante.'},{status:400});
   if(!name||name.length>180||description.length>5000||!Number.isInteger(price)||price<1||components.length>50){
    return Response.json({error:'Revisa el nombre, descripción, precio y componentes.'},{status:400});
   }
