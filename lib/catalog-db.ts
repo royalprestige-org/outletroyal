@@ -132,7 +132,7 @@ export async function allProducts() {
   return ps.results.map(p => ({
     id: p.id, name: p.name, family: p.family,
     category: p.category_name || '', subcategory: p.subcategory_name || '', categoryId: p.category_id || null, subcategoryId: p.subcategory_id || null, description: p.description, basePrice: p.base_price,
-    kind: p.kind, isKitchenSet: !!p.is_kitchen_set, completed: !!p.completed,
+    kind: p.kind, isKitchenSet: !!p.is_kitchen_set, isGiftEligible: !!p.is_gift_eligible, completed: !!p.completed,
     updatedAt: p.updated_at, components: components.get(String(p.id)) || [],
     relatedProductIds: related.get(String(p.id)) || [],
     photos: photos.get(String(p.id)) || [],
