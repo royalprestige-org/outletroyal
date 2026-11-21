@@ -301,3 +301,9 @@
  .storefront .cart-lead-fields h3{font-size:19px}
  .storefront .lead-submit{padding:12px 0 calc(14px + env(safe-area-inset-bottom,0px))}
 }
+
+
+/* Unified assistance action: a single path for demonstration and maintenance. */
+.storefront .outro-actions .outro-assistance{background:#252a30;color:#fff;border-color:#252a30;min-height:48px}
+.storefront .outro-actions .outro-assistance:hover{background:#3e464f}
+.storefront .cart-section.visit .visit-toggle{min-height:47px}
