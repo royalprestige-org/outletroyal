@@ -11,6 +11,7 @@ import {colonias,slots,slotAvailable} from '@/data/colonias';
 import {type Payment} from '@/lib/pricing';
 import {OUTLET_NOTICE,OUTLET_START,OUTLET_END,outletActive} from '@/lib/outlet';
 import {matchesProduct} from '@/lib/catalog-search';
+import {visibleProductCode} from '@/lib/product-code';
 import './storefront.css';
 
 type Photo={id:string;url:string};type Part={label:string;quantity:number};type Warranty={label:string;details:string;status:'verified'|'review';sourceUrl:string};
@@ -127,7 +128,7 @@ export default function Storefront(){
    city?`Ciudad: ${city}`:'',
    `Modalidad de interés: ${active?'Outlet':'Compra Tradicional'}`,
    'Artículos de interés:',
-   ...selected.map(p=>`• ${p.quantity} × ${p.name} (${p.id})${active&&p.outlet?` — Precio Outlet ${money(p.outlet.price*p.quantity)}`:''}`),
+   ...selected.map(p=>`• ${p.quantity} × ${p.name} (${visibleProductCode(p.id)})${active&&p.outlet?` — Precio Outlet ${money(p.outlet.price*p.quantity)}`:''}`),
    chosenGift?`Regalo elegido: ${products.find(p=>p.id===chosenGift)?.name||chosenGift}`:'',
    additional?`Producto adicional a precio especial: ${additional.name}`:'',
    `Forma de pago preferida: ${pay}`,
