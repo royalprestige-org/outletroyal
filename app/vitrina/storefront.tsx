@@ -66,7 +66,7 @@ export default function Storefront(){
  return()=>{alive=false;timers.forEach(clearTimeout);window.removeEventListener('focus',refresh)};
  },[]);
  const offerItems:Item[]=useMemo(()=>offers.map(o=>({id:`OF-${o.id}`,name:o.name,description:o.description,family:'Ofertas especiales',category:'',subcategory:'',isKitchenSet:true,isGiftEligible:false,isOffer:true,price:o.price,photos:[],components:o.items.map(i=>({label:products.find(p=>p.id===i.productId)?.name||i.productId,quantity:i.quantity}))})),[offers,products]);
- const campaignAvailable=campaign&&outletActive(clock),active=campaignAvailable&&purchaseMode==='outlet';
+ const campaignAvailable=campaign&&outletActive(Date.now()),active=campaignAvailable&&purchaseMode==='outlet';
  const all=useMemo(()=>[...offerItems,...products],[offerItems,products]);
  const available=useMemo(()=>{
   const byId=new Map(all.map(p=>[p.id,p]));
