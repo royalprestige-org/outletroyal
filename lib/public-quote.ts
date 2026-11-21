@@ -8,7 +8,7 @@ export async function calculatePublicQuote(input:QuoteRequest){
  if(input.purchaseMode!==undefined&&!['normal','outlet'].includes(input.purchaseMode))throw new Error('Revisa la modalidad de compra.');
  await seedIfEmpty();const database=db();
  const [products,offers,relations]=await Promise.all([
-  database.prepare('SELECT id,name,base_price,is_kitchen_set FROM public.products').all<{id:string;name:string;base_price:number;is_kitchen_set:number}>(),
+  database.prepare('SELECT id,name,base_price,is_kitchen_set,is_gift_eligible FROM public.products').all<{id:string;name:string;base_price:number;is_kitchen_set:boolean;is_gift_eligible:boolean}>(),
   database.prepare('SELECT id,name,special_price FROM public.offers WHERE active=true').all<{id:string;name:string;special_price:number}>(),
   database.prepare('SELECT product_id,related_product_id FROM public.product_relations ORDER BY product_id,position').all<{product_id:string;related_product_id:string}>()
  ]);
@@ -44,7 +44,7 @@ export async function calculatePublicQuote(input:QuoteRequest){
  if(input.purchaseMode==='outlet'&&normal.length)throw new Error('Un artículo relacionado no participa en Outlet. Cambia a Compra regular o elige otro artículo.');
  if(typeof input.expectedOutlet==='boolean'&&input.expectedOutlet!==hasOutlet)throw new Error('La promoción cambió. Actualiza el catálogo y revisa la forma de pago.');
  if(hasOutlet ? input.payment==='finance'||input.months!==0 : input.payment==='card'&&![3,6,12].includes(input.months)||input.payment==='finance'&&![12,18,24].includes(input.months))throw new Error('Revisa la forma de pago: Outlet acepta contado o tarjeta en un solo pago.');
- const original=cartBase(normal),giftOptions=products.results.filter(p=>giftEligible(p.base_price,original)),addOptions=hasOutlet?[]:products.results.filter(p=>additionalEligible({id:p.id,basePrice:p.base_price,isKitchenSet:!!p.is_kitchen_set},lines));
+ const original=cartBase(normal),giftOptions=products.results.filter(p=>p.is_gift_eligible===true&&giftEligible(p.base_price,original)),addOptions=hasOutlet?[]:products.results.filter(p=>additionalEligible({id:p.id,basePrice:p.base_price,isKitchenSet:!!p.is_kitchen_set},lines));
  if(input.giftId&&!giftOptions.some(p=>p.id===input.giftId)||input.additionalId&&!addOptions.some(p=>p.id===input.additionalId))throw new Error('Actualiza el regalo o producto adicional para esta selección.');
  const addition=addOptions.find(p=>p.id===input.additionalId),result=checkoutQuote(normal,outlet,addition?.base_price??0,input.payment,input.months);
  const unitPrices=new Map([...outlet.map(p=>[p.id,p.basePrice] as const),...normal.map(p=>[p.id,input.payment==='cash'?roundMoney(p.basePrice*.9):p.basePrice] as const)]);
