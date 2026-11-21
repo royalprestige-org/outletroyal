@@ -132,3 +132,36 @@ button{cursor:pointer}
 .related-search-results button small{font-size:11px;color:#7b8795}
 .related-search-results p{font-size:13px;color:#718096;padding:12px}
 @media(max-width:750px){.related-search-results button{flex-wrap:wrap}.related-search-results button small{width:100%}}
+
+
+/* Administrador del catálogo jerárquico, independiente de los tipos antiguos. */
+.category-manager{background:#fff;border:1px solid #dfe4eb;border-radius:17px;box-shadow:0 12px 35px #19354e09;padding:clamp(16px,3vw,30px);min-width:0}
+.category-manager-intro{display:flex;align-items:flex-start;gap:16px;color:#213a55;border-bottom:1px solid #e9edf1;padding-bottom:20px;margin-bottom:22px}
+.category-manager-intro>svg{flex:none;color:#ad8d57;margin-top:4px}
+.category-manager-intro h2{font-size:22px;font-family:Georgia,serif;font-weight:500;margin:0 0 7px}
+.category-manager-intro p{color:#687b8e;font-size:14px;line-height:1.55;margin:0;max-width:680px}
+.category-manager-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.category-manager-panel{border:1px solid #dfe5eb;border-radius:13px;min-width:0;overflow:hidden;background:#fff}
+.category-manager-panel>h3{margin:0;padding:17px 18px;border-bottom:1px solid #e6eaef;background:#f8fafc;font-size:16px;color:#273d53}
+.category-manager-panel>h3 span{font-size:13px;font-weight:400;color:#738195;margin-left:5px}
+.category-add-form{padding:17px 16px;display:grid;gap:9px;border-bottom:1px solid #e7ebef}
+.category-add-form label{font-size:13px;font-weight:700;color:#34445a}
+.category-add-form small{font-size:12px;color:#748396;line-height:1.45}
+.category-form-row{display:flex;gap:8px;min-width:0}
+.category-form-row input{flex:1;min-width:0}
+.category-form-row button{flex:none;display:flex;gap:6px}
+.category-manager-list{max-height:490px;overflow:auto}
+.category-manager-row{display:flex;align-items:center;gap:7px;padding:10px 12px;border-top:1px solid #edf0f3}
+.category-manager-row:first-child{border-top:none}
+.category-manager-row.current{background:#edf3f8}
+.category-manager-row .category-select{flex:1;min-width:0;border:0;background:transparent;text-align:left;padding:5px}
+.category-manager-row .category-select strong{display:block;font-size:14px;color:#233b56;overflow-wrap:anywhere}
+.category-manager-row .category-select small{display:block;font-size:12px;color:#8090a0;margin-top:3px}
+.category-manager-row>button:not(.category-select){display:grid;place-items:center;border:1px solid #e4e9ee;background:#fff;border-radius:8px;width:35px;height:35px;flex:none;color:#51657b}
+.category-manager-row>button:not(.category-select):hover{background:#edf2f6}
+.category-manager-row>button:disabled{opacity:.45;cursor:not-allowed}
+.category-subcategory-label{flex:1;min-width:0;font-size:14px;color:#334a60;overflow-wrap:anywhere;padding:6px 5px}
+.category-manager-empty{margin:0;padding:20px 16px;color:#8a98a8;font-size:13px}
+.category-message{color:#244c71;background:#eff5fa;border:1px solid #cadbea;border-radius:9px;padding:11px 14px;font-size:13px;margin:0 0 18px}
+@media(max-width:800px){.category-manager-columns{grid-template-columns:1fr}}
+@media(max-width:430px){.category-manager{padding:13px}.category-add-form{padding:14px 12px}.category-form-row button{padding:7px 10px;font-size:12px}}
