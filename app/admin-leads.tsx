@@ -28,13 +28,13 @@ export default function AdminLeads({products,offers}:{products:ProductOption[];o
  const [filters,setFilters]=useState<Filters>(blank),[page,setPage]=useState(1);
  const [result,setResult]=useState<ApiResult>({rows:[],total:0,contacts:0,page:1,pageSize:25});
  const [loading,setLoading]=useState(true),[error,setError]=useState('');
- const [selectedId,setSelectedId]=useState<string|null>(null);
+ const [selectedId,setSelectedId]=useState<string|null>(null),[historySelection,setHistorySelection]=useState<Lead|null>(null);
  const [history,setHistory]=useState<Lead[]|null>(null),[historyPage,setHistoryPage]=useState(1),[historyTotal,setHistoryTotal]=useState(0),[historyLoading,setHistoryLoading]=useState(false);
  const [copyNotice,setCopyNotice]=useState('');
  const options=useMemo(()=>[...products.map(p=>({id:p.id,name:p.name})),...offers.map(o=>({id:'OF-'+o.id,name:o.name}))].sort((a,b)=>a.name.localeCompare(b.name,'es')),[products,offers]);
- const active=useMemo(()=>result.rows.find(lead=>lead.id===selectedId)||result.rows[0]||null,[result.rows,selectedId]);
+ const active=useMemo(()=>historySelection||result.rows.find(lead=>lead.id===selectedId)||result.rows[0]||null,[result.rows,selectedId,historySelection]);
  const totalPages=Math.max(1,Math.ceil(result.total/result.pageSize));
- const change=(key:keyof Filters,value:string)=>{setFilters(curr=>({...curr,[key]:value}));setPage(1);setHistory(null);setSelectedId(null)};
+ const change=(key:keyof Filters,value:string)=>{setFilters(curr=>({...curr,[key]:value}));setPage(1);setHistory(null);setSelectedId(null);setHistorySelection(null)};
  useEffect(()=>{
   const abort=new AbortController();
   const timeout=setTimeout(async()=>{
@@ -84,7 +84,7 @@ export default function AdminLeads({products,offers}:{products:ProductOption[];o
   <div className="leads-columns">
    <div className="leads-list">
     <div className="leads-list-title"><h3>Consultas</h3><span>{loading?'Cargando…':result.total+' registros'}</span></div>
-    {result.rows.length===0&&!loading?<p className="leads-empty">No hay consultas con los filtros seleccionados. Los nuevos registros aparecerán cuando alguien pulse el botón para solicitar información por WhatsApp.</p>:result.rows.map(lead=><button type="button" className={active?.id===lead.id?'lead-row current':'lead-row'} key={lead.id} onClick={()=>{setSelectedId(lead.id);setHistory(null);setCopyNotice('')}}>
+    {result.rows.length===0&&!loading?<p className="leads-empty">No hay consultas con los filtros seleccionados. Los nuevos registros aparecerán cuando alguien pulse el botón para solicitar información por WhatsApp.</p>:result.rows.map(lead=><button type="button" className={active?.id===lead.id?'lead-row current':'lead-row'} key={lead.id} onClick={()=>{setSelectedId(lead.id);setHistory(null);setHistorySelection(null);setCopyNotice('')}}>
      <span className="lead-row-top"><strong>{lead.customer_name}</strong><small>{fmtDate(lead.created_at)}</small></span>
      <span className="lead-row-phone">{lead.phone} · {lead.contact_consultations} consulta{lead.contact_consultations===1?'':'s'}</span>
      <span className="lead-row-product">{lead.primary_product_name}</span>
@@ -108,7 +108,7 @@ export default function AdminLeads({products,offers}:{products:ProductOption[];o
      <pre className="lead-whatsapp-message">{active.whatsapp_message}</pre>
      <p className="lead-status">Estado: solicitud registrada y mensaje preparado. El envío efectivo desde WhatsApp no puede verificarse automáticamente.</p>
      {copyNotice&&<p role="status" className="lead-feedback">{copyNotice}</p>}
-     {history!==null&&<div className="lead-history"><h4>Consultas de este contacto</h4>{historyLoading?<p>Cargando historial…</p>:history.map(lead=><button key={lead.id} type="button" onClick={()=>{setSelectedId(lead.id);setHistory(null)}}><CalendarDays size={15}/><span>{fmtDate(lead.created_at)} — {lead.primary_product_name}</span></button>)}{historyTotal>25&&<div className="leads-pagination"><button disabled={historyPage===1} onClick={()=>viewHistory(active.contact_id,historyPage-1)}>Anterior</button><span>{historyPage}/{Math.ceil(historyTotal/25)}</span><button disabled={historyPage>=Math.ceil(historyTotal/25)} onClick={()=>viewHistory(active.contact_id,historyPage+1)}>Siguiente</button></div>}</div>}
+     {history!==null&&<div className="lead-history"><h4>Consultas de este contacto</h4>{historyLoading?<p>Cargando historial…</p>:history.map(lead=><button key={lead.id} type="button" onClick={()=>{setHistorySelection(lead);setHistory(null)}}><CalendarDays size={15}/><span>{fmtDate(lead.created_at)} — {lead.primary_product_name}</span></button>)}{historyTotal>25&&<div className="leads-pagination"><button disabled={historyPage===1} onClick={()=>viewHistory(active.contact_id,historyPage-1)}>Anterior</button><span>{historyPage}/{Math.ceil(historyTotal/25)}</span><button disabled={historyPage>=Math.ceil(historyTotal/25)} onClick={()=>viewHistory(active.contact_id,historyPage+1)}>Siguiente</button></div>}</div>}
     </>:<div className="leads-empty">Selecciona una consulta para revisar el mensaje y el historial del cliente.</div>}
    </div>
   </div>
