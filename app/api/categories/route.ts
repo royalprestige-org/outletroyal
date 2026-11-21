@@ -1,4 +1,5 @@
 import {db,requireAdmin,responseError} from '@/lib/catalog-db';
+import {hasRestrictedBrand} from '@/lib/brand-policy';
 
 type CategoryRow={id:string;name:string};
 type SubcategoryRow={id:string;category_id:string;name:string};
@@ -32,6 +33,7 @@ export async function POST(request:Request){
   const input=await request.json() as Record<string,unknown>;
   const name=validName(input.name);
   if(!name||name.length>90)return Response.json({error:'El nombre debe tener de 1 a 90 caracteres.'},{status:400});
+  if(hasRestrictedBrand(name))return Response.json({error:'Las categorías deben tener nombres neutrales sin marcas.'},{status:400});
   if(input.kind==='category'){
    const row=await db().prepare('INSERT INTO public.catalog_categories(name) VALUES (?) RETURNING id,name').bind(name).first<CategoryRow>();
    return Response.json({item:row},{status:201});
@@ -51,6 +53,7 @@ export async function PATCH(request:Request){
  try{
   const input=await request.json() as Record<string,unknown>,name=validName(input.name);
   if(!validId(input.id)||!name||name.length>90)return Response.json({error:'Revisa el nombre y el registro seleccionado.'},{status:400});
+  if(hasRestrictedBrand(name))return Response.json({error:'Las categorías deben tener nombres neutrales sin marcas.'},{status:400});
   const table=input.kind==='category'?'catalog_categories':input.kind==='subcategory'?'catalog_subcategories':null;
   if(!table)return Response.json({error:'Tipo inválido.'},{status:400});
   const row=await db().prepare(`UPDATE public.${table} SET name=? WHERE id=? RETURNING id,name`).bind(name,input.id).first<CategoryRow>();
