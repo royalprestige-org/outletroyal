@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Outlet de artículos de cocina | Los Cabos",
-  description: "Descubre artículos de cocina, consulta precios y promociones, y recibe asesoría personalizada por WhatsApp en Los Cabos.",
+  title: "Artículos de cocina | Compra Tradicional y Outlet",
+  description: "Explora artículos de cocina, compara modalidades de compra, consulta precios y solicita asesoría personalizada por WhatsApp.",
   openGraph: {
-    title: "Outlet de artículos de cocina | Los Cabos",
-    description: "Explora nuestra colección, elige tus favoritos y envíanos tu selección por WhatsApp. Asesoría personalizada y entrega a domicilio.",
+    title: "Artículos de cocina | Compra Tradicional y Outlet",
+    description: "Explora el catálogo, compara formas de pago y consulta asesoría personalizada por WhatsApp.",
     type: "website",
     locale: "es_MX",
-    siteName: "Outlet de artículos de cocina",
+    siteName: "Tienda de artículos de cocina",
   },
   twitter: {
     card: "summary",
-    title: "Outlet de artículos de cocina | Los Cabos",
-    description: "Explora productos y promociones para tu cocina. Elige tus favoritos y contáctanos por WhatsApp.",
+    title: "Artículos de cocina | Compra Tradicional y Outlet",
+    description: "Encuentra artículos de cocina y revisa Compra Tradicional y promociones Outlet vigentes.",
   },
   icons: {
     icon: "/favicon.svg",
