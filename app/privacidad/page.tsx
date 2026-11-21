@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import './privacy.css';
 
-export const metadata={title:'Aviso de privacidad | Corporativo NEXIA',description:'Tratamiento de datos de contacto y solicitudes de asesoría para artículos de cocina en Los Cabos.'};
+export const metadata={title:'Aviso de privacidad | Corporativo NEXIA',description:'Tratamiento de datos de contacto y solicitudes de asesoría para artículos de cocina en Los Cabos.',alternates:{canonical:'https://cocina-los-cabos-bcs.vercel.app/privacidad'}};
 
 export default function PrivacyPage(){return <main className="privacy-page"><div className="privacy-wrap"><Link href="/vitrina" className="privacy-back">← Volver al catálogo</Link><p className="privacy-eyebrow">CORPORATIVO NEXIA</p><h1>Aviso de privacidad</h1><p className="privacy-intro">Queremos que sepas qué información recibimos, para qué la usamos y cómo pedir que dejemos de utilizarla.</p>
  <section><h2>Responsable y contacto</h2><p>Corporativo NEXIA, con domicilio en Miguel Hidalgo S/N, Los Cabos, Baja California Sur, C. P. 23468, es responsable del tratamiento de los datos recabados en esta vitrina y en las solicitudes de asesoría. Puedes escribirnos al <a href="https://wa.me/526241710903" target="_blank" rel="noopener noreferrer">WhatsApp 624 171 0903</a>.</p></section>
