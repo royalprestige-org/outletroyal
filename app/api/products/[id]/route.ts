@@ -7,8 +7,8 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
   const {id}=await params;
   const input=await request.json() as Record<string,any>;
   const database=db();
-  const existing=await database.prepare('SELECT id,kind,category_id,subcategory_id FROM public.products WHERE id=?')
-    .bind(id).first<{id:string;kind:string;category_id:string|null;subcategory_id:string|null}>();
+  const existing=await database.prepare('SELECT id,kind,category_id,subcategory_id,is_gift_eligible FROM public.products WHERE id=?')
+    .bind(id).first<{id:string;kind:string;category_id:string|null;subcategory_id:string|null;is_gift_eligible:boolean}>();
   if(!existing)return Response.json({error:'Producto no encontrado'},{status:404});
 
   const name=String(input.name||'').trim(),description=String(input.description||'').trim();
@@ -57,10 +57,13 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
    }
   }
 
+  if(input.isGiftEligible!==undefined&&typeof input.isGiftEligible!=='boolean')
+    return Response.json({error:'La elegibilidad para regalo debe ser una opción válida.'},{status:400});
+  const giftEligibleFlag=input.isGiftEligible===undefined?existing.is_gift_eligible:input.isGiftEligible;
   const isSet=input.kind==='set',now=new Date().toISOString();
   const statements=[
-   database.prepare("UPDATE public.products SET name=?,category='',category_id=?,subcategory_id=?,description=?,base_price=?,kind=?,is_kitchen_set=?,completed=?,updated_at=? WHERE id=?")
-    .bind(name,categoryId,subcategoryId,description,price,isSet?'set':'individual',!!input.isKitchenSet,!!input.completed,now,id),
+   database.prepare("UPDATE public.products SET name=?,category='',category_id=?,subcategory_id=?,description=?,base_price=?,kind=?,is_kitchen_set=?,is_gift_eligible=?,completed=?,updated_at=? WHERE id=?")
+    .bind(name,categoryId,subcategoryId,description,price,isSet?'set':'individual',!!input.isKitchenSet,giftEligibleFlag,!!input.completed,now,id),
    database.prepare('DELETE FROM public.product_components WHERE product_id=?').bind(id)
   ];
   if(isSet)for(const [i,c] of components.entries()){
