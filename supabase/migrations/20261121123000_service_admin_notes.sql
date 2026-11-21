@@ -1,0 +1,1 @@
+ALTER TABLE public.service_requests ADD COLUMN IF NOT EXISTS admin_note text NOT NULL DEFAULT '' CHECK(char_length(admin_note)<=2000);
