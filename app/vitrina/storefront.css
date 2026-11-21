@@ -219,7 +219,9 @@
  .storefront .store-cart{width:44px;min-width:44px;height:44px;justify-content:center;padding:7px;gap:1px}
  .storefront .store-cart em{font-size:10px;min-width:16px;height:16px}
  .storefront .premium-hero{display:block;min-height:0}
- .storefront .premium-hero-media{display:none}
+ .storefront .premium-hero-media{display:block;min-height:118px;height:118px}
+ .storefront .premium-hero-photo{height:100%}
+ .storefront .premium-hero-stamp{display:none}
  .storefront .premium-hero-copy{padding:28px 18px 27px}
  .storefront .premium-hero-copy h1{font-size:clamp(29px,7vw,36px);line-height:1.08;margin-bottom:13px}
  .storefront .premium-hero-copy>p:not(.overline){margin-bottom:17px;line-height:1.5}
