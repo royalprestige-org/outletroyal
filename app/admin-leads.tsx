@@ -18,6 +18,7 @@ type Lead={
 };
 type Filters={name:string;phone:string;from:string;to:string;primary:string;gift:string;additional:string};
 type ApiResult={rows:Lead[];total:number;contacts:number;page:number;pageSize:number;error?:string};
+type ServiceBrief={id:string;service_type:'demonstration'|'maintenance';status:string;date:string;note:string};
 const blank:Filters={name:'',phone:'',from:'',to:'',primary:'',gift:'',additional:''};
 const fmtDate=(iso:string)=>new Date(iso).toLocaleString('es-MX',{timeZone:'America/Mazatlan',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
 const peso=(value:number)=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:2}).format(value);
@@ -31,9 +32,19 @@ export default function AdminLeads({products,offers}:{products:ProductOption[];o
  const [selectedId,setSelectedId]=useState<string|null>(null),[historySelection,setHistorySelection]=useState<Lead|null>(null);
  const [history,setHistory]=useState<Lead[]|null>(null),[historyPage,setHistoryPage]=useState(1),[historyTotal,setHistoryTotal]=useState(0),[historyLoading,setHistoryLoading]=useState(false);
  const [copyNotice,setCopyNotice]=useState('');
+ const [serviceHistory,setServiceHistory]=useState<ServiceBrief[]>([]);
  const options=useMemo(()=>[...products.map(p=>({id:p.id,name:p.name})),...offers.map(o=>({id:'OF-'+o.id,name:o.name}))].sort((a,b)=>a.name.localeCompare(b.name,'es')),[products,offers]);
  const active=useMemo(()=>historySelection||result.rows.find(lead=>lead.id===selectedId)||result.rows[0]||null,[result.rows,selectedId,historySelection]);
  const totalPages=Math.max(1,Math.ceil(result.total/result.pageSize));
+ useEffect(()=>{
+  if(!active?.contact_id){setServiceHistory([]);return}
+  const controller=new AbortController();
+  fetch('/api/admin/assistance?contactId='+encodeURIComponent(active.contact_id),{cache:'no-store',signal:controller.signal})
+   .then(async r=>r.json() as Promise<{requests:ServiceBrief[]}>)
+   .then(j=>{if(!controller.signal.aborted)setServiceHistory(j.requests||[])})
+   .catch(()=>{if(!controller.signal.aborted)setServiceHistory([])});
+  return()=>controller.abort();
+ },[active?.contact_id]);
  const change=(key:keyof Filters,value:string)=>{setFilters(curr=>({...curr,[key]:value}));setPage(1);setHistory(null);setSelectedId(null);setHistorySelection(null)};
  useEffect(()=>{
   const abort=new AbortController();
@@ -95,6 +106,7 @@ export default function AdminLeads({products,offers}:{products:ProductOption[];o
    <div className="leads-detail">
     {active?<><div className="lead-detail-head"><span className="lead-overline">CONSULTA {active.id.slice(0,8).toUpperCase()}</span><h3>{active.customer_name}</h3><p>{fmtDate(active.created_at)} · {active.city||'Ciudad no indicada'}</p></div>
      <div className="lead-detail-contacts"><a href={'https://wa.me/52'+active.phone} target="_blank" rel="noopener noreferrer"><MessageCircle size={17}/> {active.phone}</a><button onClick={()=>viewHistory(active.contact_id)}><History size={17}/> Historial ({active.contact_consultations})</button></div>
+     {serviceHistory.length>0&&<div className="lead-service-history"><strong>Asistencia solicitada ({serviceHistory.length})</strong>{serviceHistory.map(item=><p key={item.id}>{item.service_type==='maintenance'?'Mantenimiento':'Demostración'} · {String(item.date).slice(0,10)} · {item.status==='scheduled'?'Agendada':item.status==='confirmed'?'Confirmada':item.status==='rescheduled'?'Reagendada':'Cancelada'}</p>)}</div>}
      <dl className="lead-detail-data">
       <div><dt>Artículo principal</dt><dd>{active.primary_product_name} <small>{visibleProductCode(active.primary_product_id)}</small></dd></div>
       <div><dt>Modalidad y pago preferido</dt><dd>{active.purchase_mode==='outlet'?'Outlet':'Compra Tradicional'} · {active.payment_preference?paymentNames[active.payment_preference]||active.payment_preference:'Sin definir'}</dd></div>
