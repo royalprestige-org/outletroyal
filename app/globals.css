@@ -165,3 +165,11 @@ button{cursor:pointer}
 .category-message{color:#244c71;background:#eff5fa;border:1px solid #cadbea;border-radius:9px;padding:11px 14px;font-size:13px;margin:0 0 18px}
 @media(max-width:800px){.category-manager-columns{grid-template-columns:1fr}}
 @media(max-width:430px){.category-manager{padding:13px}.category-add-form{padding:14px 12px}.category-form-row button{padding:7px 10px;font-size:12px}}
+
+
+/* Controlled gift eligibility: separate from the existing "Es un set" flag. */
+.gift-eligibility-admin{display:grid;gap:9px;padding:16px 18px;background:#f8fafc;border:1px solid #dce4ec;border-radius:12px;margin:18px 0}
+.gift-eligibility-admin .toggle{display:flex;align-items:center;gap:11px;margin:0;color:#293e54;font-weight:700;font-size:14px;cursor:pointer}
+.gift-eligibility-admin input[type="checkbox"]{width:20px;height:20px;flex:none;accent-color:#334f67}
+.gift-eligibility-admin small{color:#728193;font-size:12px;line-height:1.6}
+@media(max-width:650px){.gift-eligibility-admin{padding:15px 13px;margin:14px 0}.gift-eligibility-admin .toggle{font-size:13px}}
