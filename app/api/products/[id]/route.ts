@@ -7,15 +7,32 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
   const {id}=await params;
   const input=await request.json() as Record<string,any>;
   const database=db();
-  const existing=await database.prepare('SELECT id,kind,category FROM public.products WHERE id=?')
-    .bind(id).first<{id:string;kind:string;category:string}>();
+  const existing=await database.prepare('SELECT id,kind,category_id,subcategory_id FROM public.products WHERE id=?')
+    .bind(id).first<{id:string;kind:string;category_id:string|null;subcategory_id:string|null}>();
   if(!existing)return Response.json({error:'Producto no encontrado'},{status:404});
 
   const name=String(input.name||'').trim(),description=String(input.description||'').trim();
-  const category=String(input.category??existing.category??'').trim();
+  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const categoryValue=Object.hasOwn(input,'categoryId')?input.categoryId:existing.category_id;
+  const subcategoryValue=Object.hasOwn(input,'subcategoryId')?input.subcategoryId:existing.subcategory_id;
+  const categoryId=categoryValue===null||categoryValue===''?null:categoryValue;
+  const subcategoryId=subcategoryValue===null||subcategoryValue===''?null:subcategoryValue;
+  if((categoryId!==null&&(typeof categoryId!=='string'||!uuid.test(categoryId)))||
+     (subcategoryId!==null&&(typeof subcategoryId!=='string'||!uuid.test(subcategoryId)))||
+     (subcategoryId!==null&&categoryId===null)){
+    return Response.json({error:'Elige una categoría y subcategoría válidas.'},{status:400});
+  }
+  if(categoryId){
+    const found=await database.prepare('SELECT id FROM public.catalog_categories WHERE id=?').bind(categoryId).first();
+    if(!found)return Response.json({error:'La categoría seleccionada ya no existe.'},{status:400});
+  }
+  if(subcategoryId){
+    const found=await database.prepare('SELECT id FROM public.catalog_subcategories WHERE id=? AND category_id=?').bind(subcategoryId,categoryId).first();
+    if(!found)return Response.json({error:'La subcategoría no pertenece a la categoría elegida.'},{status:400});
+  }
   const price=Number(input.basePrice),components=Array.isArray(input.components)?input.components:[];
-  if(!name||name.length>180||!category||category.length>90||description.length>5000||!Number.isInteger(price)||price<1||components.length>50){
-   return Response.json({error:'Revisa el nombre, categoría, descripción, precio y componentes.'},{status:400});
+  if(!name||name.length>180||description.length>5000||!Number.isInteger(price)||price<1||components.length>50){
+   return Response.json({error:'Revisa el nombre, descripción, precio y componentes.'},{status:400});
   }
 
   // La asociación es dirigida (A->B), sin generar automáticamente B->A.
@@ -42,8 +59,8 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
 
   const isSet=input.kind==='set',now=new Date().toISOString();
   const statements=[
-   database.prepare('UPDATE public.products SET name=?,category=?,description=?,base_price=?,kind=?,is_kitchen_set=?,completed=?,updated_at=? WHERE id=?')
-    .bind(name,category,description,price,isSet?'set':'individual',!!input.isKitchenSet,!!input.completed,now,id),
+   database.prepare("UPDATE public.products SET name=?,category='',category_id=?,subcategory_id=?,description=?,base_price=?,kind=?,is_kitchen_set=?,completed=?,updated_at=? WHERE id=?")
+    .bind(name,categoryId,subcategoryId,description,price,isSet?'set':'individual',!!input.isKitchenSet,!!input.completed,now,id),
    database.prepare('DELETE FROM public.product_components WHERE product_id=?').bind(id)
   ];
   if(isSet)for(const [i,c] of components.entries()){
@@ -59,6 +76,6 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
    }
   }
   await database.batch(statements);
-  return Response.json({ok:true,category,relatedProductIds:relatedIds});
+  return Response.json({ok:true,categoryId,subcategoryId,relatedProductIds:relatedIds});
  }catch(e){return responseError(e)}
 }
