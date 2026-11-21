@@ -192,3 +192,12 @@
  .storefront .product-grid.is-list .card-media{min-height:170px}
  .storefront .catalog-page-buttons button{min-width:33px;padding:6px 8px}
 }
+
+
+/* Filtros contextuales de la nueva taxonomía de productos. */
+.storefront .category-filter{display:flex;align-items:center;flex-wrap:wrap;gap:10px 13px;padding:13px 0 4px}
+.storefront .category-filter-select{width:min(100%,275px)!important;min-width:180px;flex:0 1 275px}
+@media(max-width:760px){
+ .storefront .category-filter{display:grid;grid-template-columns:1fr;align-items:stretch;gap:8px}
+ .storefront .category-filter-select{width:100%!important;min-width:0;max-width:none}
+}
