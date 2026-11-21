@@ -101,15 +101,21 @@ export async function seedIfEmpty() {
 
 export async function allProducts() {
   await seedIfEmpty();
-  const [ps, cs, ph, rel] = await Promise.all([
+  const [ps, cs, ph, rel, suggestions] = await Promise.all([
     db().prepare('SELECT p.*,c.name AS category_name,sc.name AS subcategory_name FROM public.products p LEFT JOIN public.catalog_categories c ON c.id=p.category_id LEFT JOIN public.catalog_subcategories sc ON sc.id=p.subcategory_id ORDER BY p.id').all<Row>(),
     db().prepare('SELECT * FROM public.product_components ORDER BY product_id,position').all<Row>(),
     db().prepare('SELECT * FROM public.product_photos ORDER BY product_id,position').all<Row>(),
-    db().prepare('SELECT product_id,related_product_id FROM public.product_relations ORDER BY product_id,position,related_product_id').all<Row>(), 
+    db().prepare('SELECT product_id,related_product_id FROM public.product_relations ORDER BY product_id,position,related_product_id').all<Row>(),
+    db().prepare('SELECT product_id,gift_product_id FROM public.product_gift_suggestions ORDER BY product_id,position,gift_product_id').all<Row>(), 
   ]);
   const components = new Map<string, unknown[]>();
   const photos = new Map<string, unknown[]>();
   const related = new Map<string,string[]>();
+  const suggestedGifts = new Map<string,string[]>();
+  for (const suggestion of suggestions.results) {
+    const id = String(suggestion.product_id);
+    suggestedGifts.set(id,[...(suggestedGifts.get(id)||[]),String(suggestion.gift_product_id)]);
+  }
   for (const relation of rel.results) {
     const id = String(relation.product_id);
     related.set(id, [...(related.get(id) || []), String(relation.related_product_id)]);
@@ -135,6 +141,7 @@ export async function allProducts() {
     kind: p.kind, isKitchenSet: !!p.is_kitchen_set, isGiftEligible: !!p.is_gift_eligible, completed: !!p.completed,
     updatedAt: p.updated_at, components: components.get(String(p.id)) || [],
     relatedProductIds: related.get(String(p.id)) || [],
+    suggestedGiftIds: suggestedGifts.get(String(p.id)) || [],
     photos: photos.get(String(p.id)) || [],
     warranty: p.warranty_json && Object.keys(p.warranty_json as Row).length
       ? p.warranty_json : warrantyById.get(String(p.id)) || null,
