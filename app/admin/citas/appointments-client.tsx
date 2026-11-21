@@ -1,5 +1,5 @@
-import {visibleProductCode} from '@/lib/product-code';
 'use client';
+import {visibleProductCode} from '@/lib/product-code';
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import Link from 'next/link';
 import {ArrowLeft,CalendarDays,Check,Plus,Save,Trash2} from 'lucide-react';
