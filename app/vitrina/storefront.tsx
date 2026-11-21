@@ -64,7 +64,7 @@ export default function Storefront(){
  void refresh();const timers=[OUTLET_START,OUTLET_END].map(at=>{const delay=at-Date.now();return delay>0&&delay<2147483647?setTimeout(refresh,delay+250):undefined});window.addEventListener('focus',refresh);
  return()=>{alive=false;timers.forEach(clearTimeout);window.removeEventListener('focus',refresh)};
  },[]);
- const offerItems:Item[]=useMemo(()=>offers.map(o=>({id:`OF-${o.id}`,name:o.name,description:o.description,family:'Ofertas especiales',category:'',subcategory:'',isKitchenSet:true,isOffer:true,price:o.price,photos:[],components:o.items.map(i=>({label:products.find(p=>p.id===i.productId)?.name||i.productId,quantity:i.quantity}))})),[offers,products]);
+ const offerItems:Item[]=useMemo(()=>offers.map(o=>({id:`OF-${o.id}`,name:o.name,description:o.description,family:'Ofertas especiales',category:'',subcategory:'',isKitchenSet:true,isGiftEligible:false,isOffer:true,price:o.price,photos:[],components:o.items.map(i=>({label:products.find(p=>p.id===i.productId)?.name||i.productId,quantity:i.quantity}))})),[offers,products]);
  const campaignAvailable=campaign&&outletActive(clock),active=campaignAvailable&&purchaseMode==='outlet';
  const all=useMemo(()=>[...offerItems,...products],[offerItems,products]);
  const available=useMemo(()=>{
@@ -87,7 +87,7 @@ export default function Storefront(){
  const allowBenefits=hasNormal;
  const effectivePayment=hasOutlet&&payment==='finance'?null:payment;
  const term=hasOutlet?0:payment==='finance'?financeMonths:payment==='card'?months:0;
- const chosenGift=allowBenefits?giftId:'',chosenAdditional=hasOutlet?'':additionalId;
+ const chosenGift=allowBenefits&&products.some(p=>p.id===giftId&&p.isGiftEligible)?giftId:'',chosenAdditional=hasOutlet?'':additionalId;
  const quoteKey=JSON.stringify([roots,selected.map(p=>[p.id,p.quantity]),effectivePayment,term,chosenGift,chosenAdditional,hasOutlet,purchaseMode]);
  const selectedQuote=resolvedKey===quoteKey?quoteValue:null;
  useEffect(()=>{if(hasOutlet){setAdditionalId('');if(payment==='finance')setPayment(null)}if(!allowBenefits){setGiftId('')}},[hasOutlet,allowBenefits,payment]);
