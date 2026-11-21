@@ -280,3 +280,24 @@
  .storefront .store-toast button{min-height:42px}
  .storefront .store-toast .store-toast-close{min-height:42px}
 }
+
+
+/* Lead generation: no checkout or online payments, only prepared WhatsApp requests. */
+.storefront .cart-lead-fields{display:grid;gap:11px;border-bottom:1px solid #E2E5E8;padding:20px 0 22px}
+.storefront .cart-lead-fields h3{font:600 21px/1.2 Arial,Helvetica,sans-serif;letter-spacing:-.03em;color:#252A30;margin:0}
+.storefront .cart-lead-fields>p{color:#66788B;line-height:1.5;font-size:13px;margin:0 0 4px}
+.storefront .cart-lead-fields label{display:grid;gap:6px;color:#34495d;font-size:13px;font-weight:650}
+.storefront .cart-lead-fields input{min-height:44px;font-size:16px}
+.storefront .cart-lead-fields>small{font-size:12px;line-height:1.5;color:#66788b}
+.storefront .cart-lead-fields .lead-validation{color:#963e33}
+.storefront .cart-lead-fields .lead-privacy a{color:#34495d;text-decoration:underline;text-underline-offset:2px}
+.storefront .lead-submit{position:sticky;bottom:0;z-index:8;background:#fff;border-top:1px solid #e4e8ed;box-shadow:0 -8px 18px #252A300b;padding:16px 0 calc(14px + env(safe-area-inset-bottom,0px));display:grid;gap:9px}
+.storefront .lead-submit>button,.storefront .checkout-actions .visit-button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border:0;border-radius:9px;padding:11px 15px;background:#252a30;color:white;font-weight:700;font-size:14px}
+.storefront .lead-submit>button.visit-button,.storefront .checkout-actions .visit-button{background:#E8E0D4;color:#252A30}
+.storefront .lead-submit>button:disabled{opacity:.45;cursor:not-allowed}
+.storefront .lead-submit>small{font-size:11px;line-height:1.4;text-align:center;color:#687887}
+@media(max-width:760px){
+ .storefront .cart-lead-fields{padding:17px 0 20px}
+ .storefront .cart-lead-fields h3{font-size:19px}
+ .storefront .lead-submit{padding:12px 0 calc(14px + env(safe-area-inset-bottom,0px))}
+}
