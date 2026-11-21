@@ -60,6 +60,25 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
    }
   }
 
+  // Las sugerencias son dirigidas y distintas de los productos vinculados de compra.
+  // Clientes antiguos que omitan suggestedGiftIds no alteran la lista guardada.
+  let suggestedGiftIds:string[]|null=null;
+  if(input.suggestedGiftIds!==undefined){
+   const requested=input.suggestedGiftIds;
+   if(!Array.isArray(requested)||requested.length>200||
+      requested.some((x:unknown)=>typeof x!=='string'||!x.trim()))
+     return Response.json({error:'Selecciona una lista válida de regalos sugeridos.'},{status:400});
+   suggestedGiftIds=requested.map((x:string)=>x.trim());
+   if(suggestedGiftIds.includes(id)||new Set(suggestedGiftIds).size!==suggestedGiftIds.length)
+     return Response.json({error:'No se puede sugerir el mismo artículo ni repetir regalos.'},{status:400});
+   if(suggestedGiftIds.length){
+    const catalog=await database.prepare('SELECT id FROM public.products').all<{id:string}>();
+    const valid=new Set(catalog.results.map(row=>row.id));
+    if(suggestedGiftIds.some(gift=>!valid.has(gift)))
+     return Response.json({error:'Hay un regalo sugerido que ya no existe.'},{status:400});
+   }
+  }
+
   if(input.isGiftEligible!==undefined&&typeof input.isGiftEligible!=='boolean')
     return Response.json({error:'La elegibilidad para regalo debe ser una opción válida.'},{status:400});
   const giftEligibleFlag=input.isGiftEligible===undefined?existing.is_gift_eligible:input.isGiftEligible;
@@ -81,7 +100,12 @@ export async function PUT(request:Request,{params}:{params:Promise<{id:string}>}
     statements.push(database.prepare('INSERT INTO public.product_relations (product_id,related_product_id,position) VALUES (?,?,?)').bind(id,target,i));
    }
   }
+  if(suggestedGiftIds!==null){
+   statements.push(database.prepare('DELETE FROM public.product_gift_suggestions WHERE product_id=?').bind(id));
+   for(const [position,giftId] of suggestedGiftIds.entries())
+    statements.push(database.prepare('INSERT INTO public.product_gift_suggestions(product_id,gift_product_id,position) VALUES (?,?,?)').bind(id,giftId,position));
+  }
   await database.batch(statements);
-  return Response.json({ok:true,categoryId,subcategoryId,relatedProductIds:relatedIds});
+  return Response.json({ok:true,categoryId,subcategoryId,relatedProductIds:relatedIds,suggestedGiftIds});
  }catch(e){return responseError(e)}
 }
