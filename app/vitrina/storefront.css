@@ -264,3 +264,17 @@
 @media(prefers-reduced-motion:reduce){
  .storefront .store-card,.storefront .hero-action,.storefront .card-media img,.storefront .premium-category{transition:none!important}
 }
+
+
+/* Nonblocking quick-add confirmation. */
+.storefront .store-toast{position:fixed;z-index:60;right:clamp(15px,3vw,35px);bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;max-width:min(540px,calc(100vw - 30px));padding:13px 14px;background:#252A30;color:white;border-radius:12px;box-shadow:0 12px 34px #252A3066;font-size:13px}
+.storefront .store-toast>svg{flex:none;color:#d6e4d4}
+.storefront .store-toast>span{min-width:0;line-height:1.4}
+.storefront .store-toast button{flex:none;border:1px solid #e0e5ec;border-radius:7px;color:#252A30;background:#fff;padding:8px 11px;font-weight:700;font-size:12px;min-height:36px}
+.storefront .store-toast .store-toast-close{background:transparent;border:0;color:#fff;font-size:21px;min-width:36px}
+@media(max-width:760px){
+ .storefront .store-toast{left:15px;right:15px;bottom:calc(13px + env(safe-area-inset-bottom,0px));padding:11px 12px;flex-wrap:wrap}
+ .storefront .store-toast>span{flex:1;min-width:150px}
+ .storefront .store-toast button{min-height:42px}
+ .storefront .store-toast .store-toast-close{min-height:42px}
+}
