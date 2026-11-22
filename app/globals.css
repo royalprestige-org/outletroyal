@@ -284,3 +284,17 @@ button{cursor:pointer}
 .lead-service-history{padding:12px 14px;border-radius:10px;background:#eef5f9;border:1px solid #dce8f0;display:grid;gap:6px}
 .lead-service-history strong{font-size:12px;color:#335069}
 .lead-service-history p{font-size:12px;color:#4b6880;margin:0;line-height:1.5}
+
+
+/* Photo picker stability: keep the native file control inside its label instead
+   of positioning it against the entire editor, which can jump the scroll area. */
+.columns:not(.offers-columns) > .detail{height:max(650px,calc(100dvh - 215px));min-height:650px}
+.columns:not(.offers-columns) > .detail .detail-scroll{min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.photo-upload{position:relative;isolation:isolate;overflow:hidden}
+.photo-upload input[type="file"]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;display:block}
+.photo-upload input[type="file"]:focus-visible{outline:2px solid #436989;outline-offset:-3px}
+.photo-upload:focus-within{outline:2px solid #436989;outline-offset:2px}
+@media(max-width:750px){
+ .columns:not(.offers-columns) > .detail{height:auto;min-height:0}
+ .columns:not(.offers-columns) > .detail .detail-scroll{max-height:none;overflow:visible}
+}
